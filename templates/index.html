@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>vidsrc player — search</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='index.css') }}" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container py-4">
+        <h1 class="mb-3">vidsrc player</h1>
+
+        {% if history %}
+        <div class="card mb-4">
+            <div class="card-header">Continue Watching</div>
+            <ul class="list-group list-group-flush">
+                {% for h in history %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ h.title }}</strong>
+                        <small class="text-muted">({{ h.type.upper() }}{% if h.season %}S{{ h.season }}{% endif %}{% if
+                            h.episode %}E{{ h.episode }}{% endif %})</small>
+                    </div>
+                    <a class="btn btn-sm btn-outline-primary"
+                        href="{{ url_for('player', id=h.id, type=h.type, season=h.season, episode=h.episode, title=h.title) }}">
+                        Resume
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <form id="searchForm" class="row g-2">
+                    <div class="col-md-8">
+                        <input id="q" class="form-control" placeholder="Search movie or show">
+                    </div>
+                    <div class="col-md-2">
+                        <select id="type" class="form-select">
+                            <option value="">All</option>
+                            <option value="movie">Movie</option>
+                            <option value="tv">TV</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-grid">
+                        <button class="btn btn-primary">Search</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="results" class="list-group"></div>
+    </div>
+
+    <script>
+        async function doSearch(q, type) {
+            const res = await fetch("/search", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ q, type })
+            });
+            return res.json();
+        }
+
+        document.getElementById("searchForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const q = document.getElementById("q").value.trim();
+            const type = document.getElementById("type").value;
+            if (!q) return;
+
+            const results = await doSearch(q, type);
+            const container = document.getElementById("results");
+            container.innerHTML = "";
+
+            if (!results.length) {
+                container.innerHTML = '<div class="alert alert-warning">No results</div>';
+                return;
+            }
+
+            for (const item of results) {
+                const line = document.createElement("a");
+                line.href = "#";
+                line.className = "list-group-item list-group-item-action d-flex justify-content-between align-items-start";
+                const titleText = `${item.title} ${item.year ? "(" + item.year + ")" : ""}`;
+                const typeLabel = item.type === "tv" ? "TV" : "Movie";
+                line.innerHTML = `
+                    <div>
+                        <div class="fw-bold">${titleText}</div>
+                        <div class="small text-muted">${item.imdb_id} • ${typeLabel}</div>
+                    </div>
+                    <div>
+                        <a href="/player?id=${item.imdb_id}&type=${item.type}&title=${encodeURIComponent(item.title)}" class="btn btn-sm btn-outline-primary">Play</a>
+                        ${item.type === "tv" ? `<a href="/player?id=${item.imdb_id}&type=tv&season=1&episode=1&title=${encodeURIComponent(item.title)}" class="btn btn-sm btn-outline-secondary">S1E1</a>` : ""}
+                    </div>
+                `;
+                container.appendChild(line);
+            }
+        });
+    </script>
+</body>
+
+</html>

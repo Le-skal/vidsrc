@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title or "Player" }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='player.css') }}" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container-fluid py-3">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h2>{{ title }}</h2>
+                <div class="small text-muted">
+                    ID: <strong id="mediaId">{{ id }}</strong> • Type: <strong id="mediaType">{{ media_type }}</strong>
+                </div>
+                {% if media_type == "tv" %}
+                <p>Season {{ season or 1 }}, Episode {{ episode or 1 }}</p>
+                {% endif %}
+            </div>
+            <div>
+                <a href="/" class="btn btn-outline-light">← Back</a>
+            </div>
+        </div>
+
+        <!-- TV Controls -->
+        <div id="tvControls" class="row g-2 align-items-center mb-3" style="display: none;">
+            <div class="col-auto">
+                <label class="form-label mb-0">Season</label>
+                <input id="seasonInput" type="number" min="1" class="form-control" value="{{ season or 1 }}" />
+            </div>
+            <div class="col-auto">
+                <label class="form-label mb-0">Episode</label>
+                <input id="episodeInput" type="number" min="1" class="form-control" value="{{ episode or 1 }}" />
+            </div>
+            <div class="col-auto d-grid">
+                <button id="loadBtn" class="btn btn-primary mt-2">Load</button>
+            </div>
+            <div class="col-auto d-grid">
+                <button id="nextSeasonBtn" class="btn btn-outline-success mt-2">Next Season</button>
+            </div>
+            <div class="col-auto d-grid">
+                <button id="nextEpisodeBtn" class="btn btn-outline-primary mt-2">Next Episode</button>
+            </div>
+        </div>
+
+        <!-- Player iframe -->
+        <div class="card mb-3">
+            <div class="card-body p-0">
+                <iframe id="playerFrame" class="player-iframe" src="{{ iframe_url }}" allowfullscreen
+                    allow="autoplay; fullscreen; picture-in-picture"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const mediaType = "{{ media_type }}";
+        const mediaId = "{{ id }}";
+
+        const tvControls = document.getElementById("tvControls");
+        const seasonInput = document.getElementById("seasonInput");
+        const episodeInput = document.getElementById("episodeInput");
+        const loadBtn = document.getElementById("loadBtn");
+        const nextEpisodeBtn = document.getElementById("nextEpisodeBtn");
+        const nextSeasonBtn = document.getElementById("nextSeasonBtn");
+        const playerFrame = document.getElementById("playerFrame");
+
+        if (mediaType === "tv" || mediaType === "series") {
+            tvControls.style.display = "flex";
+        }
+
+        function vidsrcTvUrl(id, season, episode) {
+            if (!season) return `https://vidsrc.icu/embed/tv/${id}`;
+            if (!episode) return `https://vidsrc.icu/embed/tv/${id}/${season}`;
+            return `https://vidsrc.icu/embed/tv/${id}/${season}/${episode}`;
+        }
+
+        function updateIframeForTv() {
+            const s = parseInt(seasonInput.value) || 1;
+            const e = parseInt(episodeInput.value) || 1;
+            playerFrame.src = vidsrcTvUrl(mediaId, s, e);
+        }
+
+        function saveProgress(s, e) {
+            fetch("/api/update_progress", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: mediaId,
+                    type: mediaType,
+                    season: s,
+                    episode: e,
+                    title: "{{ title }}"
+                })
+            });
+        }
+
+        loadBtn?.addEventListener("click", () => {
+            const s = parseInt(seasonInput.value) || 1;
+            const e = parseInt(episodeInput.value) || 1;
+            updateIframeForTv();
+            saveProgress(s, e);
+        });
+
+        nextEpisodeBtn?.addEventListener("click", () => {
+            let s = parseInt(seasonInput.value) || 1;
+            let e = parseInt(episodeInput.value) || 1;
+            e++;
+            seasonInput.value = s;
+            episodeInput.value = e;
+            updateIframeForTv();
+            saveProgress(s, e);
+        });
+
+        nextSeasonBtn?.addEventListener("click", () => {
+            let s = parseInt(seasonInput.value) || 1;
+            s++;
+            seasonInput.value = s;
+            episodeInput.value = 1;
+            updateIframeForTv();
+            saveProgress(s, 1);
+        });
+    </script>
+</body>
+
+</html>

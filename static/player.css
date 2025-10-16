@@ -1,0 +1,332 @@
+:root {
+    --bg-primary      : #0a0e27;
+    --bg-secondary    : #1a1f3a;
+    --bg-tertiary     : #252b47;
+    --accent-primary  : #6366f1;
+    --accent-secondary: #818cf8;
+    --accent-success  : #10b981;
+    --text-primary    : #e2e8f0;
+    --text-secondary  : #94a3b8;
+    --text-muted      : #64748b;
+    --border-color    : #2d3350;
+}
+
+* {
+    margin    : 0;
+    padding   : 0;
+    box-sizing: border-box;
+}
+
+body {
+    background           : linear-gradient(135deg, var(--bg-primary) 0%, #0f1420 100%);
+    color                : var(--text-primary);
+    font-family          : -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    min-height           : 100vh;
+    background-attachment: fixed;
+}
+
+.container-fluid {
+    max-width: 1800px;
+    margin   : 0 auto;
+}
+
+h2 {
+    font-size              : 2rem;
+    font-weight            : 700;
+    background             : linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip        : text;
+    letter-spacing         : -0.02em;
+    margin-bottom          : 0.5rem;
+}
+
+p {
+    color      : var(--text-secondary);
+    margin-top : 0.5rem;
+    font-size  : 1.1rem;
+    font-weight: 500;
+}
+
+.text-muted {
+    color    : var(--text-muted) !important;
+    font-size: 0.9rem;
+}
+
+.small {
+    font-size: 0.875rem;
+}
+
+strong {
+    color      : var(--text-primary);
+    font-weight: 600;
+}
+
+/* TV Controls Section */
+#tvControls {
+    background   : var(--bg-secondary);
+    border       : 1px solid var(--border-color);
+    border-radius: 12px;
+    padding      : 1.25rem;
+    box-shadow   : 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.form-label {
+    color         : var(--text-secondary);
+    font-weight   : 500;
+    font-size     : 0.875rem;
+    margin-bottom : 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.form-control {
+    background   : var(--bg-tertiary);
+    border       : 1px solid var(--border-color);
+    color        : var(--text-primary);
+    padding      : 0.65rem 0.9rem;
+    border-radius: 8px;
+    transition   : border-color 0.2s ease, box-shadow 0.2s ease;
+    width        : 100px;
+}
+
+.form-control:focus {
+    background  : var(--bg-tertiary);
+    border-color: var(--accent-primary);
+    color       : var(--text-primary);
+    box-shadow  : 0 0 0 3px rgba(99, 102, 241, 0.1);
+    outline     : none;
+}
+
+.form-text {
+    color     : var(--text-muted);
+    font-size : 0.8rem;
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+/* Buttons */
+.btn {
+    padding      : 0.65rem 1.5rem;
+    border-radius: 8px;
+    font-weight  : 500;
+    transition   : all 0.2s ease;
+    border       : none;
+    font-size    : 0.95rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+    color     : white;
+    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #5558e3 0%, #6d77f0 100%);
+    box-shadow: 0 4px 8px rgba(99, 102, 241, 0.4);
+    transform : translateY(-2px);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-outline-primary {
+    background: transparent;
+    border    : 1px solid var(--accent-primary);
+    color     : var(--accent-primary);
+}
+
+.btn-outline-primary:hover {
+    background  : var(--accent-primary);
+    color       : white;
+    border-color: var(--accent-primary);
+    box-shadow  : 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.btn-outline-success {
+    background: transparent;
+    border    : 1px solid var(--accent-success);
+    color     : var(--accent-success);
+}
+
+.btn-outline-success:hover {
+    background  : var(--accent-success);
+    color       : white;
+    border-color: var(--accent-success);
+    box-shadow  : 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.btn-outline-light {
+    background: transparent;
+    border    : 1px solid var(--border-color);
+    color     : var(--text-secondary);
+}
+
+.btn-outline-light:hover {
+    background  : var(--bg-secondary);
+    color       : var(--text-primary);
+    border-color: var(--text-secondary);
+}
+
+/* Player Card */
+.card {
+    background   : var(--bg-secondary);
+    border       : 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow     : hidden;
+    box-shadow   : 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+}
+
+.card-body {
+    padding : 0;
+    position: relative;
+}
+
+/* Player iframe */
+.player-iframe {
+    width     : 100%;
+    height    : 75vh;
+    min-height: 500px;
+    border    : none;
+    display   : block;
+    background: #000;
+}
+
+/* Header area styling */
+.d-flex.justify-content-between {
+    background   : var(--bg-secondary);
+    border       : 1px solid var(--border-color);
+    border-radius: 12px;
+    padding      : 1.25rem 1.5rem;
+    box-shadow   : 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+/* Column alignments */
+.col-auto {
+    display       : flex;
+    flex-direction: column;
+}
+
+.col-auto.d-grid {
+    display: flex !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    h2 {
+        font-size: 1.5rem;
+    }
+
+    .player-iframe {
+        height    : 50vh;
+        min-height: 300px;
+    }
+
+    #tvControls {
+        padding: 1rem;
+    }
+
+    .form-control {
+        width: 80px;
+    }
+
+    .btn {
+        padding  : 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .d-flex.justify-content-between {
+        flex-direction: column;
+        gap           : 1rem;
+    }
+
+    .d-flex.justify-content-between>div:last-child {
+        align-self: flex-start;
+    }
+
+    #tvControls .col {
+        flex      : 1 1 100%;
+        margin-top: 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    #tvControls {
+        flex-direction: column !important;
+        align-items   : stretch !important;
+    }
+
+    #tvControls .col-auto {
+        width: 100%;
+    }
+
+    .form-control {
+        width: 100%;
+    }
+
+    #tvControls .col-auto.d-grid button {
+        width: 100%;
+    }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+    background   : var(--bg-tertiary);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-primary);
+}
+
+/* Loading state for iframe */
+.player-iframe::before {
+    content         : '';
+    position        : absolute;
+    top             : 50%;
+    left            : 50%;
+    transform       : translate(-50%, -50%);
+    width           : 50px;
+    height          : 50px;
+    border          : 3px solid var(--border-color);
+    border-top-color: var(--accent-primary);
+    border-radius   : 50%;
+    animation       : spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+/* Input number controls styling */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    opacity: 1;
+    cursor : pointer;
+}
+
+/* Focus visible improvements */
+.btn:focus-visible,
+.form-control:focus-visible {
+    outline       : 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+/* Smooth transitions for all interactive elements */
+a,
+button,
+input,
+select {
+    transition: all 0.2s ease;
+}

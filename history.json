@@ -1,0 +1,66 @@
+[
+  {
+    "title": "Mr. Robot",
+    "id": "tt4158110",
+    "type": "tv",
+    "season": 2,
+    "episode": 4,
+    "timestamp": "2025-10-11T21:11:16.805027"
+  },
+  {
+    "title": "Supernatural",
+    "id": "tt0460681",
+    "type": "tv",
+    "season": 1,
+    "episode": 9,
+    "timestamp": "2025-10-11T21:09:53.020628"
+  },
+  {
+    "title": "Rick and Morty",
+    "id": "tt2861424",
+    "type": "tv",
+    "season": 1,
+    "episode": 1,
+    "timestamp": "2025-10-10T18:51:51.070022"
+  },
+  {
+    "title": "The Originals",
+    "id": "tt2632424",
+    "type": "tv",
+    "season": 1,
+    "episode": 21,
+    "timestamp": "2025-10-10T17:13:58.110433"
+  },
+  {
+    "title": "Dexter",
+    "id": "tt0773262",
+    "type": "tv",
+    "season": 1,
+    "episode": 1,
+    "timestamp": "2025-10-09T21:42:05.750468"
+  },
+  {
+    "title": "Falling Skies",
+    "id": "tt1462059",
+    "type": "tv",
+    "season": 1,
+    "episode": 2,
+    "timestamp": "2025-10-09T21:41:00.229201"
+  },
+  {
+    "title": "Tulsa King",
+    "id": "tt16358384",
+    "type": "tv",
+    "season": 2,
+    "episode": 32,
+    "timestamp": "2025-10-09T21:12:07.684076"
+  },
+  {
+    "title": "Peacemaker",
+    "id": "tt13146488",
+    "type": "tv",
+    "season": 1,
+    "episode": 1,
+    "timestamp": "2025-10-09T20:51:12.826510"
+  }
+]
