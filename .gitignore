@@ -1,0 +1,12 @@
+    # Ignore Python cache files
+__pycache__/
+*.pyc
+
+# Ignore environment variables
+.env
+
+# Ignore credentials
+credentials.json
+
+# Ignore other local files
+*.sqlite3

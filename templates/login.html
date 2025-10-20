@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Account</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@latest/css/pico.min.css">
+    <style>
+        .accounts { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 30px; }
+        .account-btn { 
+            width: 120px; height: 120px; border-radius: 10px; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 1.2rem; cursor: pointer; background-color: #333; color: white; 
+            transition: transform 0.2s; text-align: center;
+        }
+        .account-btn:hover { transform: scale(1.1); background-color: #555; }
+        .new-account { margin-top: 30px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    </style>
+</head>
+<body>
+<main class="container">
+    <h2>🎬 Select an Account</h2>
+    {% if error %}
+        <p style="color:red;">{{ error }}</p>
+    {% endif %}
+
+    <div class="accounts">
+        {% for acc in accounts %}
+            <form method="POST" style="display:inline;">
+                <input type="hidden" name="account" value="{{ acc }}">
+                <button class="account-btn" type="submit">{{ acc }}</button>
+            </form>
+        {% endfor %}
+    </div>
+
+    <div class="new-account">
+        <form method="POST">
+            <input type="text" name="account" placeholder="Create new account" required>
+            <button type="submit">Add Account</button>
+        </form>
+    </div>
+</main>
+</body>
+</html>

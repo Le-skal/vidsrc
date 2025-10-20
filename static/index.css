@@ -26,6 +26,14 @@ body {
     background-attachment: fixed;
 }
 
+form button {
+    background-color: #e50914; color: white; border: none; padding: 8px 12px;
+    border-radius: 4px; cursor: pointer;
+}
+form button:hover {
+    background-color: #f40612;
+}
+
 .container {
     max-width: 1200px;
 }

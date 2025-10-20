@@ -12,6 +12,9 @@
 <body>
     <div class="container py-4">
         <h1 class="mb-3">vidsrc player</h1>
+        <form method="GET" action="{{ url_for('logout') }}" style="position: absolute; top: 20px; right: 20px;">
+            <button type="submit">Logout</button>
+        </form>
 
         {% if history %}
         <div class="card mb-4">

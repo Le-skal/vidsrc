@@ -1,49 +1,90 @@
 import os
 import json
 from datetime import datetime
-import urllib.parse
-from flask import Flask, render_template, request, jsonify, url_for, redirect
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
+import gspread
+from google.oauth2.service_account import Credentials
 
 load_dotenv()
 
 app = Flask(__name__)
-OMDB_API_KEY = os.getenv("OMDB_API_KEY")
-HISTORY_FILE = "history.json"
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "supersecretkey")  # Needed for sessions
+
+OMDB_API_KEY = os.getenv("OMDB_API_KEY", "42600cf2")
+
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+SERVICE_ACCOUNT_FILE = "credentials.json"
+SHEET_ID = "1R0Ske-O8Rv_1o6Kp329y3xE2kzwAO7O2_Y_tpJ7dOt4"
 MAX_HISTORY = 10
+
+# 🔑 Initialize Google Sheets
+credentials = Credentials.from_service_account_file(
+    SERVICE_ACCOUNT_FILE, scopes=SCOPES
+)
+gc = gspread.authorize(credentials)
+workbook = gc.open_by_key(SHEET_ID)
+
+
+def get_user_sheet():
+    """Return the active user's Google Sheet worksheet."""
+    account = session.get("account")
+    if not account:
+        return None
+    try:
+        return workbook.worksheet(account)
+    except gspread.WorksheetNotFound:
+        # Create new sheet if it doesn't exist
+        ws = workbook.add_worksheet(title=account, rows=100, cols=6)
+        headers = ["title", "id", "type", "season", "episode", "timestamp"]
+        ws.append_row(headers)
+        return ws
 
 
 def load_history():
-    if not os.path.exists(HISTORY_FILE):
+    sheet = get_user_sheet()
+    if not sheet:
         return []
     try:
-        with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
+        records = sheet.get_all_records()
+        return records or []
+    except Exception as e:
+        print("Error loading history:", e)
         return []
 
 
 def save_history(history):
+    sheet = get_user_sheet()
+    if not sheet:
+        return
     try:
-        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-            json.dump(history, f, indent=2, ensure_ascii=False)
+        history = history[:MAX_HISTORY]
+        sheet.clear()
+        headers = ["title", "id", "type", "season", "episode", "timestamp"]
+        rows = [headers] + [
+            [
+                h.get("title", ""),
+                h.get("id", ""),
+                h.get("type", ""),
+                h.get("season", ""),
+                h.get("episode", ""),
+                h.get("timestamp", ""),
+            ]
+            for h in history
+        ]
+        sheet.update(rows)
     except Exception as e:
         print("Error saving history:", e)
 
 
 def add_to_history(entry):
     history = load_history()
-    # remove any duplicate id/type combo
     history = [
-        h
-        for h in history
-        if not (h["id"] == entry["id"] and h["type"] == entry["type"])
+        h for h in history if not (h["id"] == entry["id"] and h["type"] == entry["type"])
     ]
     history.insert(0, entry)
-    if len(history) > MAX_HISTORY:
-        history = history[:MAX_HISTORY]
     save_history(history)
 
 
@@ -108,14 +149,47 @@ def search_titles(query, search_type=None, max_results=10):
         return results
 
 
+# 🧑‍💻 Account selection routes
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        account = request.form.get("account", "").strip()
+        if not account:
+            return render_template("login.html", error="Please enter an account name")
+
+        # Create worksheet if it doesn't exist
+        try:
+            workbook.worksheet(account)
+        except gspread.WorksheetNotFound:
+            ws = workbook.add_worksheet(title=account, rows=100, cols=6)
+            ws.append_row(["title", "id", "type", "season", "episode", "timestamp"])
+
+        session["account"] = account
+        return redirect(url_for("index"))
+
+    # List existing accounts
+    accounts = [ws.title for ws in workbook.worksheets()]
+    return render_template("login.html", accounts=accounts)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
 @app.route("/")
 def index():
+    if "account" not in session:
+        return redirect(url_for("login"))
     history = load_history()
-    return render_template("index.html", history=history)
+    return render_template("index.html", history=history, account=session["account"])
 
 
 @app.route("/search", methods=["POST"])
 def search():
+    if "account" not in session:
+        return redirect(url_for("login"))
     q = (request.json or {}).get("q", "")
     t = (request.json or {}).get("type")
     return jsonify(search_titles(q, search_type=t))
@@ -123,41 +197,36 @@ def search():
 
 @app.route("/player")
 def player():
+    if "account" not in session:
+        return redirect(url_for("login"))
+
     id_ = request.args.get("id")
     media_type = (request.args.get("type") or "movie").lower()
     season = request.args.get("season")
     episode = request.args.get("episode")
     title = request.args.get("title", "")
 
-    # Recover progress if not passed
     history = load_history()
     prev = next(
         (h for h in history if h["id"] == id_ and h["type"] == media_type), None
     )
+
     season_int = (
         int(season)
         if season and season.isdigit()
-        else (
-            prev["season"]
-            if prev and prev.get("season")
-            else 1 if media_type == "tv" else None
-        )
+        else (prev["season"] if prev and prev.get("season") else 1 if media_type == "tv" else None)
     )
     episode_int = (
         int(episode)
         if episode and episode.isdigit()
-        else (
-            prev["episode"]
-            if prev and prev.get("episode")
-            else 1 if media_type == "tv" else None
-        )
+        else (prev["episode"] if prev and prev.get("episode") else 1 if media_type == "tv" else None)
     )
 
-    if media_type == "tv":
-        iframe = f"https://vidsrc.icu/embed/tv/{id_}/{season_int}/{episode_int}"
-    else:
-        iframe = f"https://vidsrc.icu/embed/movie/{id_}"
-        # Save new progress
+    iframe = (
+        f"https://vidsrc.icu/embed/tv/{id_}/{season_int}/{episode_int}"
+        if media_type == "tv"
+        else f"https://vidsrc.icu/embed/movie/{id_}"
+    )
 
     add_to_history(
         {
@@ -183,21 +252,24 @@ def player():
 
 @app.route("/api/history")
 def api_history():
+    if "account" not in session:
+        return jsonify([])
     return jsonify(load_history())
 
 
 @app.route("/api/update_progress", methods=["POST"])
 def update_progress():
+    if "account" not in session:
+        return jsonify({"error": "Not logged in"}), 403
+
     data = request.json
     if not data:
         return jsonify({"error": "No data"}), 400
 
     history = load_history()
-    # Remove old entry
     history = [
         h for h in history if not (h["id"] == data["id"] and h["type"] == data["type"])
     ]
-    # Add updated entry at the front
     history.insert(
         0,
         {
