@@ -13,7 +13,7 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "supersecretkey")  # Needed for sessions
 
-OMDB_API_KEY = os.getenv("OMDB_API_KEY", "42600cf2")
+OMDB_API_KEY = os.getenv("OMDB_API_KEY")
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 SERVICE_ACCOUNT_FILE = "credentials.json"
