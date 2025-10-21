@@ -16,14 +16,13 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "supersecretkey")  # Needed for s
 OMDB_API_KEY = os.getenv("OMDB_API_KEY")
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
-SERVICE_ACCOUNT_FILE = "credentials.json"
+GOOGLE_CREDS = os.getenv("GOOGLE_CREDS")
+credentials_dict = json.loads(GOOGLE_CREDS)
+credentials = Credentials.from_service_account_info(credentials_dict, scopes=SCOPES)
+
 SHEET_ID = "1R0Ske-O8Rv_1o6Kp329y3xE2kzwAO7O2_Y_tpJ7dOt4"
 MAX_HISTORY = 10
 
-# 🔑 Initialize Google Sheets
-credentials = Credentials.from_service_account_file(
-    SERVICE_ACCOUNT_FILE, scopes=SCOPES
-)
 gc = gspread.authorize(credentials)
 workbook = gc.open_by_key(SHEET_ID)
 
