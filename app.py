@@ -21,7 +21,7 @@ credentials_dict = json.loads(GOOGLE_CREDS)
 credentials = Credentials.from_service_account_info(credentials_dict, scopes=SCOPES)
 
 SHEET_ID = "1R0Ske-O8Rv_1o6Kp329y3xE2kzwAO7O2_Y_tpJ7dOt4"
-MAX_HISTORY = 10
+MAX_HISTORY = 12
 
 gc = gspread.authorize(credentials)
 workbook = gc.open_by_key(SHEET_ID)
@@ -327,6 +327,29 @@ def get_details(imdb_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/test_player")
+def test_player():
+    """Minimal test player for debugging embed load times."""
+    if "account" not in session:
+        return redirect(url_for("login"))
+
+    id_ = request.args.get("id")
+    media_type = (request.args.get("type") or "movie").lower()
+    season = request.args.get("season")
+    episode = request.args.get("episode")
+
+    season_int = int(season) if season and season.isdigit() else 1
+    episode_int = int(episode) if episode and episode.isdigit() else 1
+
+    iframe = (
+        f"https://vidsrc.to/embed/tv/{id_}/{season_int}/{episode_int}"
+        if media_type == "tv"
+        else f"https://vidsrc.to/embed/movie/{id_}"
+    )
+
+    return render_template("test_player.html", iframe_url=iframe)
+
+
 @app.route("/player")
 def player():
     if "account" not in session:
@@ -355,9 +378,9 @@ def player():
     )
 
     iframe = (
-        f"https://vidsrc.icu/embed/tv/{id_}/{season_int}/{episode_int}"
+        f"https://vidsrc.to/embed/tv/{id_}/{season_int}/{episode_int}"
         if media_type == "tv"
-        else f"https://vidsrc.icu/embed/movie/{id_}"
+        else f"https://vidsrc.to/embed/movie/{id_}"
     )
 
     # Use existing poster from history if available, avoid unnecessary API call
@@ -365,17 +388,43 @@ def player():
     if prev and prev.get("poster"):
         poster_url = prev["poster"]
 
-    add_to_history(
-        {
-            "title": title or id_,
-            "id": id_,
-            "type": media_type,
-            "season": season_int,
-            "episode": episode_int,
-            "poster": poster_url,
-            "timestamp": datetime.utcnow().isoformat(),
-        }
-    )
+    # Save history immediately to ensure it gets to the top of the sheet
+    add_to_history({
+        "title": title or id_,
+        "id": id_,
+        "type": media_type,
+        "season": season_int,
+        "episode": episode_int,
+        "poster": poster_url,
+        "timestamp": datetime.utcnow().isoformat(),
+    })
+    
+    # Fetch poster in background if missing (non-blocking)
+    if not poster_url and OMDB_API_KEY:
+        from threading import Thread
+        
+        def fetch_poster_async():
+            try:
+                r = requests.get(
+                    "http://www.omdbapi.com/",
+                    params={"apikey": OMDB_API_KEY, "i": id_},
+                    timeout=5
+                )
+                if r.status_code == 200:
+                    data = r.json()
+                    if data.get("Poster") and data.get("Poster") != "N/A":
+                        # Update history with poster
+                        history = load_history()
+                        for h in history:
+                            if h["id"] == id_ and h["type"] == media_type:
+                                h["poster"] = data["Poster"]
+                                break
+                        save_history(history)
+            except Exception as e:
+                print(f"Error fetching poster: {e}")
+        
+        thread = Thread(target=fetch_poster_async, daemon=True)
+        thread.start()
 
     return render_template(
         "player.html",
@@ -405,9 +454,20 @@ def update_progress():
         return jsonify({"error": "No data"}), 400
 
     history = load_history()
+    
+    # Find existing entry to preserve poster
+    existing_poster = ""
+    for h in history:
+        if h["id"] == data["id"] and h["type"] == data["type"]:
+            existing_poster = h.get("poster", "")
+            break
+    
+    # Remove old entry
     history = [
         h for h in history if not (h["id"] == data["id"] and h["type"] == data["type"])
     ]
+    
+    # Insert updated entry with preserved poster
     history.insert(
         0,
         {
@@ -416,11 +476,12 @@ def update_progress():
             "type": data["type"],
             "season": data.get("season"),
             "episode": data.get("episode"),
-            "poster": data.get("poster", ""),
+            "poster": data.get("poster", "") or existing_poster,
             "timestamp": datetime.utcnow().isoformat(),
         },
     )
     save_history(history)
+    return jsonify({"status": "ok"})
     return jsonify({"status": "ok"})
 
 

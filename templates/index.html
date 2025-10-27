@@ -508,12 +508,19 @@
                         <div class="movie-card-title">${item.title}</div>
                         <div class="movie-card-type">${typeLabel} • ${item.year || 'N/A'}</div>
                         <div class="movie-card-buttons">
-                            <button class="btn-play" onclick="window.open('/player?id=${item.imdb_id}&type=${item.type}&title=${encodeURIComponent(item.title)}', '_blank')">Play</button>
-                            ${item.type === "tv" ? `<button class="btn-play" onclick="window.open('/player?id=${item.imdb_id}&type=tv&season=1&episode=1&title=${encodeURIComponent(item.title)}', '_blank')">S1E1</button>` : ""}
+                            <button class="btn-play" data-imdb-id="${item.imdb_id}" data-type="${item.type}" data-title="${item.title}">Play</button>
                         </div>
                     </div>
                 `;
                 
+                // Play button handler - navigate to player
+                const playBtn = card.querySelector(".btn-play");
+                playBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    window.location.href = `/player?id=${item.imdb_id}&type=${item.type}&title=${encodeURIComponent(item.title)}`;
+                });
+                
+                // Card click - show details modal
                 card.addEventListener("click", () => showDetails(item.imdb_id, item.type));
                 container.appendChild(card);
             }
