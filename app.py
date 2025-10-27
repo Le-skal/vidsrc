@@ -27,6 +27,98 @@ gc = gspread.authorize(credentials)
 workbook = gc.open_by_key(SHEET_ID)
 
 
+def get_avatar_sheet():
+    """Get or create the avatars sheet."""
+    try:
+        ws = workbook.worksheet("avatars")
+        # Check headers and migrate if needed
+        try:
+            headers = ws.row_values(1)
+            # If old schema detected, migrate it
+            if headers == ["account", "avatar"]:
+                print("Migrating avatar sheet from old schema...")
+                # Get all data
+                records = ws.get_all_records()
+                # Clear and recreate with new schema
+                ws.clear()
+                ws.append_row(["account", "avatar_url", "avatar_seed"])
+                # Migrate existing data - avatar URLs stored as URLs
+                for record in records:
+                    account = record.get("account", "")
+                    avatar_url = record.get("avatar", "")
+                    # If it's a URL, use it; otherwise skip (it was text-based)
+                    if avatar_url.startswith("http"):
+                        seed = avatar_url.split("seed=")[-1] if "seed=" in avatar_url else ""
+                        ws.append_row([account, avatar_url, seed])
+        except Exception as e:
+            print("Migration check error:", e)
+        return ws
+    except gspread.WorksheetNotFound:
+        ws = workbook.add_worksheet(title="avatars", rows=100, cols=3)
+        ws.append_row(["account", "avatar_url", "avatar_seed"])
+        return ws
+
+
+def get_gaming_avatars(seed_base, count=4):
+    """Fetch random gaming-style avatars from DiceBear API."""
+    import random
+    import string
+    avatars = []
+    styles = ["pixel-art", "adventurer", "lorelei"]
+    
+    # Generate a random suffix to ensure different avatars on each request
+    random_suffix = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+    
+    for i in range(count):
+        seed = f"{seed_base}_{random_suffix}_{i}"
+        style = styles[i % len(styles)]
+        url = f"https://api.dicebear.com/7.x/{style}/svg?seed={seed}"
+        avatars.append({
+            "url": url,
+            "seed": seed,
+            "style": style
+        })
+    return avatars
+
+
+def get_or_create_avatar(account):
+    """Get existing avatar or return None if not set."""
+    avatar_sheet = get_avatar_sheet()
+    try:
+        records = avatar_sheet.get_all_records()
+        for record in records:
+            if record.get("account", "").strip() == account.strip():
+                # Try new schema first, then fallback to old schema
+                avatar_url = record.get("avatar_url") or record.get("avatar", "")
+                if avatar_url and avatar_url.startswith("http"):
+                    return avatar_url
+    except Exception as e:
+        print(f"Error getting avatar for {account}:", e)
+    return None
+
+
+def has_avatar(account):
+    """Check if account has an avatar set."""
+    return get_or_create_avatar(account) is not None
+
+
+def save_avatar(account, avatar_url, seed):
+    """Save or update avatar for account."""
+    avatar_sheet = get_avatar_sheet()
+    try:
+        records = avatar_sheet.get_all_records()
+        # Find and update existing
+        for i, record in enumerate(records):
+            if record.get("account") == account:
+                avatar_sheet.update_cell(i + 2, 2, avatar_url)  # column B
+                avatar_sheet.update_cell(i + 2, 3, seed)        # column C
+                return
+        # Add new if not found
+        avatar_sheet.append_row([account, avatar_url, seed])
+    except Exception as e:
+        print("Error saving avatar:", e)
+
+
 def get_user_sheet():
     """Return the active user's Google Sheet worksheet."""
     account = session.get("account")
@@ -36,8 +128,8 @@ def get_user_sheet():
         return workbook.worksheet(account)
     except gspread.WorksheetNotFound:
         # Create new sheet if it doesn't exist
-        ws = workbook.add_worksheet(title=account, rows=100, cols=6)
-        headers = ["title", "id", "type", "season", "episode", "timestamp"]
+        ws = workbook.add_worksheet(title=account, rows=100, cols=7)
+        headers = ["title", "id", "type", "season", "episode", "poster", "timestamp"]
         ws.append_row(headers)
         return ws
 
@@ -61,7 +153,7 @@ def save_history(history):
     try:
         history = history[:MAX_HISTORY]
         sheet.clear()
-        headers = ["title", "id", "type", "season", "episode", "timestamp"]
+        headers = ["title", "id", "type", "season", "episode", "poster", "timestamp"]
         rows = [headers] + [
             [
                 h.get("title", ""),
@@ -69,6 +161,7 @@ def save_history(history):
                 h.get("type", ""),
                 h.get("season", ""),
                 h.get("episode", ""),
+                h.get("poster", ""),
                 h.get("timestamp", ""),
             ]
             for h in history
@@ -108,6 +201,7 @@ def search_titles(query, search_type=None, max_results=10):
                             "year": item.get("Year"),
                             "imdb_id": item.get("imdbID"),
                             "type": "movie" if item.get("Type") == "movie" else "tv",
+                            "poster": item.get("Poster"),
                         }
                     )
                 return results
@@ -157,18 +251,36 @@ def login():
             return render_template("login.html", error="Please enter an account name")
 
         # Create worksheet if it doesn't exist
+        is_new_account = False
         try:
             workbook.worksheet(account)
         except gspread.WorksheetNotFound:
-            ws = workbook.add_worksheet(title=account, rows=100, cols=6)
-            ws.append_row(["title", "id", "type", "season", "episode", "timestamp"])
+            is_new_account = True
+            ws = workbook.add_worksheet(title=account, rows=100, cols=7)
+            ws.append_row(["title", "id", "type", "season", "episode", "poster", "timestamp"])
 
         session["account"] = account
+        
+        # For new accounts, redirect to avatar selection
+        if is_new_account:
+            return redirect(url_for("select_avatar"))
+        
+        # For existing accounts without avatar, redirect to avatar selection
+        if not has_avatar(account):
+            return redirect(url_for("select_avatar"))
+        
         return redirect(url_for("index"))
 
-    # List existing accounts
-    accounts = [ws.title for ws in workbook.worksheets()]
-    return render_template("login.html", accounts=accounts)
+    # List existing accounts (exclude "avatars" sheet)
+    accounts = [ws.title for ws in workbook.worksheets() if ws.title != "avatars"]
+    
+    # Get avatars for each account
+    account_avatars = {}
+    for acc in accounts:
+        avatar_url = get_or_create_avatar(acc)
+        account_avatars[acc] = avatar_url
+    
+    return render_template("login.html", accounts=accounts, account_avatars=account_avatars)
 
 
 @app.route("/logout")
@@ -188,10 +300,31 @@ def index():
 @app.route("/search", methods=["POST"])
 def search():
     if "account" not in session:
-        return redirect(url_for("login"))
+        return jsonify({"error": "Not logged in"}), 403
     q = (request.json or {}).get("q", "")
     t = (request.json or {}).get("type")
-    return jsonify(search_titles(q, search_type=t))
+    results = search_titles(q, search_type=t)
+    return jsonify(results)
+
+
+@app.route("/api/details/<imdb_id>")
+def get_details(imdb_id):
+    """Fetch full details from OMDB including ratings, plot, etc."""
+    if not OMDB_API_KEY:
+        return jsonify({"error": "API key not configured"}), 400
+    try:
+        r = requests.get(
+            "http://www.omdbapi.com/",
+            params={"apikey": OMDB_API_KEY, "i": imdb_id},
+            timeout=8
+        )
+        r.raise_for_status()
+        data = r.json()
+        if data.get("Response") == "True":
+            return jsonify(data)
+        return jsonify({"error": "Not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/player")
@@ -227,6 +360,11 @@ def player():
         else f"https://vidsrc.icu/embed/movie/{id_}"
     )
 
+    # Use existing poster from history if available, avoid unnecessary API call
+    poster_url = ""
+    if prev and prev.get("poster"):
+        poster_url = prev["poster"]
+
     add_to_history(
         {
             "title": title or id_,
@@ -234,6 +372,7 @@ def player():
             "type": media_type,
             "season": season_int,
             "episode": episode_int,
+            "poster": poster_url,
             "timestamp": datetime.utcnow().isoformat(),
         }
     )
@@ -277,11 +416,70 @@ def update_progress():
             "type": data["type"],
             "season": data.get("season"),
             "episode": data.get("episode"),
+            "poster": data.get("poster", ""),
             "timestamp": datetime.utcnow().isoformat(),
         },
     )
     save_history(history)
     return jsonify({"status": "ok"})
+
+
+@app.route("/api/update_poster", methods=["POST"])
+def update_poster():
+    """Update poster for an existing history item"""
+    if "account" not in session:
+        return jsonify({"error": "Not logged in"}), 403
+
+    data = request.json
+    if not data or "id" not in data or "type" not in data:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    history = load_history()
+    
+    # Find and update the item
+    for item in history:
+        if item.get("id") == data["id"] and item.get("type") == data["type"]:
+            item["poster"] = data.get("poster", "")
+            save_history(history)
+            return jsonify({"status": "ok"})
+    
+    return jsonify({"error": "Item not found"}), 404
+
+
+@app.route("/api/avatar", methods=["POST"])
+def update_avatar():
+    """Update avatar for current account"""
+    if "account" not in session:
+        return jsonify({"error": "Not logged in"}), 403
+
+    data = request.json
+    if not data or "avatar_url" not in data or "seed" not in data:
+        return jsonify({"error": "Missing avatar_url or seed"}), 400
+
+    avatar_url = data.get("avatar_url", "").strip()
+    seed = data.get("seed", "").strip()
+    
+    if not avatar_url or not seed:
+        return jsonify({"error": "avatar_url and seed required"}), 400
+
+    save_avatar(session["account"], avatar_url, seed)
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/random_avatars")
+def get_random_avatars():
+    """Get random gaming avatars for selection."""
+    account = session.get("account", "default")
+    avatars = get_gaming_avatars(account)
+    return jsonify(avatars)
+
+
+@app.route("/select_avatar")
+def select_avatar():
+    """Avatar selection page for new/incomplete accounts."""
+    if "account" not in session:
+        return redirect(url_for("login"))
+    return render_template("select_avatar.html", account=session["account"])
 
 
 if __name__ == "__main__":

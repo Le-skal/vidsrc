@@ -10,49 +10,55 @@
 </head>
 
 <body>
-    <div class="container-fluid py-3">
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-start mb-3">
-            <div>
-                <h2>{{ title }}</h2>
-                <div class="small text-muted">
-                    ID: <strong id="mediaId">{{ id }}</strong> • Type: <strong id="mediaType">{{ media_type }}</strong>
+    <div class="netflix-player">
+        <!-- Player Container -->
+        <div class="player-container" id="playerContainer">
+            <iframe id="playerFrame" class="player-iframe" src="{{ iframe_url }}" allowfullscreen
+                allow="autoplay; fullscreen; picture-in-picture"></iframe>
+
+            <!-- Transparent overlay to capture mouse events over iframe (top area only) -->
+            <div id="mouseEventCapture" style="position: absolute; top: 0; left: 0; width: 100%; height: 25%; z-index: 5; pointer-events: auto;"></div>
+
+            <!-- Top Overlay (Title & Info) -->
+            <div class="player-overlay player-overlay-top" id="overlayTop">
+                <div class="overlay-gradient-top"></div>
+                <div class="overlay-content">
+                    <a href="/" class="btn-back">← Back</a>
+                    <div class="title-info">
+                        <h1>{{ title }}</h1>
+                        {% if media_type == "tv" %}
+                        <div class="episode-info">Season {{ season or 1 }} • Episode {{ episode or 1 }}</div>
+                        {% endif %}
+                    </div>
                 </div>
-                {% if media_type == "tv" %}
-                <p>Season {{ season or 1 }}, Episode {{ episode or 1 }}</p>
-                {% endif %}
             </div>
-            <div>
-                <a href="/" class="btn btn-outline-light">← Back</a>
-            </div>
-        </div>
 
-        <!-- TV Controls -->
-        <div id="tvControls" class="row g-2 align-items-center mb-3" style="display: none;">
-            <div class="col-auto">
-                <label class="form-label mb-0">Season</label>
-                <input id="seasonInput" type="number" min="1" class="form-control" value="{{ season or 1 }}" />
-            </div>
-            <div class="col-auto">
-                <label class="form-label mb-0">Episode</label>
-                <input id="episodeInput" type="number" min="1" class="form-control" value="{{ episode or 1 }}" />
-            </div>
-            <div class="col-auto d-grid">
-                <button id="loadBtn" class="btn btn-primary mt-2">Load</button>
-            </div>
-            <div class="col-auto d-grid">
-                <button id="nextSeasonBtn" class="btn btn-outline-success mt-2">Next Season</button>
-            </div>
-            <div class="col-auto d-grid">
-                <button id="nextEpisodeBtn" class="btn btn-outline-primary mt-2">Next Episode</button>
-            </div>
-        </div>
+            <!-- Bottom Controls (like Netflix) -->
+            <div class="player-overlay player-overlay-bottom" id="overlayBottom">
+                <div class="overlay-gradient-bottom"></div>
+                <div class="controls-bar">
+                    <div class="controls-content">
+                        <div class="controls-left">
+                        </div>
 
-        <!-- Player iframe -->
-        <div class="card mb-3">
-            <div class="card-body p-0">
-                <iframe id="playerFrame" class="player-iframe" src="{{ iframe_url }}" allowfullscreen
-                    allow="autoplay; fullscreen; picture-in-picture"></iframe>
+                        <div class="controls-middle" id="tvControls" style="display: none;">
+                            <div class="tv-control-group">
+                                <label>Season</label>
+                                <input id="seasonInput" type="number" min="1" value="{{ season or 1 }}" />
+                            </div>
+                            <div class="tv-control-group">
+                                <label>Episode</label>
+                                <input id="episodeInput" type="number" min="1" value="{{ episode or 1 }}" />
+                            </div>
+                            <button id="loadBtn" class="control-btn">Load</button>
+                            <button id="nextEpisodeBtn" class="control-btn">Next Ep</button>
+                            <button id="nextSeasonBtn" class="control-btn">Next Season</button>
+                        </div>
+
+                        <div class="controls-right">
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -61,6 +67,9 @@
         const mediaType = "{{ media_type }}";
         const mediaId = "{{ id }}";
 
+        const playerContainer = document.getElementById("playerContainer");
+        const overlayTop = document.getElementById("overlayTop");
+        const overlayBottom = document.getElementById("overlayBottom");
         const tvControls = document.getElementById("tvControls");
         const seasonInput = document.getElementById("seasonInput");
         const episodeInput = document.getElementById("episodeInput");
@@ -68,6 +77,36 @@
         const nextEpisodeBtn = document.getElementById("nextEpisodeBtn");
         const nextSeasonBtn = document.getElementById("nextSeasonBtn");
         const playerFrame = document.getElementById("playerFrame");
+        const mouseEventCapture = document.getElementById("mouseEventCapture");
+
+        // Show/hide controls on hover with auto-hide
+        let hideTimeout;
+        
+        const showControls = () => {
+            clearTimeout(hideTimeout);
+            overlayTop.classList.add("show");
+            overlayBottom.classList.add("show");
+            document.body.style.cursor = "auto";
+            
+            hideTimeout = setTimeout(() => {
+                overlayTop.classList.remove("show");
+                overlayBottom.classList.remove("show");
+                document.body.style.cursor = "none";
+            }, 3000);
+        };
+
+        // Listen on document body to catch all mouse movements (including over iframe)
+        document.addEventListener("mousemove", showControls);
+        
+        // Listen on the transparent overlay to catch mouse movements over iframe
+        mouseEventCapture.addEventListener("mousemove", showControls);
+
+        playerContainer.addEventListener("mouseleave", () => {
+            clearTimeout(hideTimeout);
+            overlayTop.classList.remove("show");
+            overlayBottom.classList.remove("show");
+            document.body.style.cursor = "auto";
+        });
 
         if (mediaType === "tv" || mediaType === "series") {
             tvControls.style.display = "flex";

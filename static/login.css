@@ -28,6 +28,13 @@ body {
 
 main {
   text-align: center;
+  max-width: 850px;
+  width: 90%;
+  padding: 2rem;
+}
+
+.login-container {
+  text-align: center;
   max-width: 700px;
   width: 90%;
   padding: 2rem;
@@ -75,12 +82,60 @@ h2 {
   margin-bottom: 10px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.3);
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  overflow: hidden;
+}
+
+.account-avatar-container {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  overflow: hidden;
+}
+
+.account-avatar-img {
+  width: 110px !important;
+  height: 110px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  background: var(--bg-tertiary) !important;
+  border: 2px solid var(--border-color) !important;
+  padding: 1rem !important;
+  margin-bottom: 10px !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3) !important;
+  display: flex !important;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease !important;
+}
+
+.account-avatar-placeholder {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .account-btn:hover .account-avatar {
   transform: scale(1.08);
   border-color: var(--accent-primary);
   box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3);
+}
+
+.account-btn:hover .account-avatar-container {
+  transform: scale(1.08);
+  border-color: var(--accent-primary);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3);
+}
+
+.account-btn:hover .account-avatar-img {
+  transform: scale(1.08) !important;
+  border: 2px solid var(--accent-primary) !important;
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3) !important;
 }
 
 .account-btn:hover {

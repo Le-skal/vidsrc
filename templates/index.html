@@ -7,101 +7,515 @@
     <title>vidsrc player — search</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='index.css') }}" rel="stylesheet">
+    <style>
+        body {
+            overflow-x: hidden;
+        }
+
+        .navbar-custom {
+            background: linear-gradient(180deg, rgba(10, 14, 39, 0.95) 0%, rgba(10, 14, 39, 0.7) 100%);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .search-section {
+            padding: 2rem 0;
+        }
+
+        .search-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .search-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1.5rem;
+            padding: 2rem 0;
+        }
+
+        .movie-card {
+            position: relative;
+            cursor: pointer;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            aspect-ratio: 2/3;
+        }
+
+        .movie-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 24px rgba(99, 102, 241, 0.3);
+        }
+
+        .movie-card-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: var(--bg-tertiary);
+        }
+
+        .movie-card-placeholder {
+            width: 100%;
+            height: 100%;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .movie-card-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.9) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 1rem;
+            z-index: 10;
+        }
+
+        .movie-card:hover .movie-card-overlay {
+            opacity: 1;
+        }
+
+        .movie-card-title {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+        }
+
+        .movie-card-type {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .movie-card-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-play {
+            flex: 1;
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-play:hover {
+            background: var(--accent-secondary);
+            transform: translateY(-2px);
+        }
+
+        .continue-section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .spinner-border {
+            color: var(--accent-primary);
+        }
+
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 1rem;
+            }
+
+            .search-container {
+                padding: 1.5rem;
+            }
+
+            .navbar-custom {
+                padding: 0.75rem 0;
+            }
+
+            .logo {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <div class="container py-4">
-        <h1 class="mb-3">vidsrc player</h1>
-        <form method="GET" action="{{ url_for('logout') }}" style="position: absolute; top: 20px; right: 20px;">
-            <button type="submit">Logout</button>
-        </form>
+    <!-- Navbar -->
+    <div class="navbar-custom">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="logo">vidsrc</div>
+            <form method="GET" action="{{ url_for('logout') }}">
+                <button type="submit" class="btn btn-sm btn-outline-primary">Logout</button>
+            </form>
+        </div>
+    </div>
 
+    <div class="container py-4">
+        <!-- Continue Watching Section -->
         {% if history %}
-        <div class="card mb-4">
-            <div class="card-header">Continue Watching</div>
-            <ul class="list-group list-group-flush">
+        <div class="continue-section">
+            <h2 class="section-title">Continue Watching</h2>
+            <div class="grid-container" id="continueWatching">
                 {% for h in history %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>{{ h.title }}</strong>
-                        <small class="text-muted">({{ h.type.upper() }}{% if h.season %}S{{ h.season }}{% endif %}{% if
-                            h.episode %}E{{ h.episode }}{% endif %})</small>
+                <div class="movie-card" data-imdb-id="{{ h.id }}" data-type="{{ h.type }}" data-title="{{ h.title }}" data-season="{{ h.season }}" data-episode="{{ h.episode }}">
+                    {% if h.poster and h.poster != 'N/A' %}
+                        <img src="{{ h.poster }}" alt="{{ h.title }}" class="movie-card-img">
+                    {% else %}
+                        <div class="movie-card-placeholder">
+                            <span>{{ h.title }}</span>
+                        </div>
+                    {% endif %}
+                    <div class="movie-card-overlay">
+                        <div class="movie-card-title">{{ h.title }}</div>
+                        <div class="movie-card-type">{{ h.type.upper() }}{% if h.season %} • S{{ h.season }}{% endif %}{% if h.episode %}E{{ h.episode }}{% endif %}</div>
+                        <div class="movie-card-buttons">
+                            <button class="btn-play">Resume</button>
+                        </div>
                     </div>
-                    <a class="btn btn-sm btn-outline-primary"
-                        href="{{ url_for('player', id=h.id, type=h.type, season=h.season, episode=h.episode, title=h.title) }}">
-                        Resume
-                    </a>
-                </li>
+                </div>
                 {% endfor %}
-            </ul>
+            </div>
         </div>
         {% endif %}
 
-        <div class="card mb-4">
-            <div class="card-body">
+        <!-- Search Section -->
+        <div class="search-section">
+            <div class="search-container">
+                <div class="search-title">Search Movies & Shows</div>
                 <form id="searchForm" class="row g-2">
                     <div class="col-md-8">
-                        <input id="q" class="form-control" placeholder="Search movie or show">
+                        <input id="q" class="form-control" placeholder="Search by title...">
                     </div>
                     <div class="col-md-2">
                         <select id="type" class="form-select">
                             <option value="">All</option>
                             <option value="movie">Movie</option>
-                            <option value="tv">TV</option>
+                            <option value="tv">TV Series</option>
                         </select>
                     </div>
                     <div class="col-md-2 d-grid">
-                        <button class="btn btn-primary">Search</button>
+                        <button type="submit" class="btn btn-primary">Search</button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <div id="results" class="list-group"></div>
+        <!-- Results Section -->
+        <div id="results" class="grid-container"></div>
+        <div id="noResults" class="no-results" style="display: none;">
+            <p>No results found. Try a different search.</p>
+        </div>
     </div>
 
+    <!-- Detail Modal -->
+    <div class="modal fade" id="detailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="background: var(--bg-secondary); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title" id="modalTitle" style="color: var(--text-primary);"></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <img id="modalPoster" src="" alt="Poster" class="img-fluid rounded mb-3" style="max-height: 300px;">
+                        </div>
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <strong style="color: var(--accent-primary);">Type:</strong> <span id="modalType" style="color: var(--text-primary);"></span>
+                            </div>
+                            <div class="mb-3">
+                                <strong style="color: var(--accent-primary);">Year:</strong> <span id="modalYear" style="color: var(--text-primary);"></span>
+                            </div>
+                            <div class="mb-3">
+                                <strong style="color: var(--accent-primary);">Runtime:</strong> <span id="modalRuntime" style="color: var(--text-primary);"></span>
+                            </div>
+                            <div class="mb-3">
+                                <strong style="color: var(--accent-primary);">Genre:</strong> <span id="modalGenre" style="color: var(--text-primary);"></span>
+                            </div>
+                            <div class="mb-3">
+                                <strong style="color: var(--accent-primary);">Director:</strong> <span id="modalDirector" style="color: var(--text-primary);"></span>
+                            </div>
+                            <div class="mb-3">
+                                <strong style="color: var(--accent-primary);">Actors:</strong> <span id="modalActors" style="color: var(--text-primary);"></span>
+                            </div>
+                            <div class="mb-3">
+                                <strong style="color: var(--accent-primary);">IMDb Rating:</strong> <span id="modalRating" class="badge" style="background: var(--warning); color: black;"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <strong style="color: var(--accent-primary);">Plot:</strong>
+                        <p id="modalPlot" class="mt-2" style="color: var(--text-secondary);"></p>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <a id="playBtn" href="#" class="btn btn-primary">Play</a>
+                    <a id="s1e1Btn" href="#" class="btn btn-secondary" style="display: none;">Play S1E1</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        const detailModal = new bootstrap.Modal(document.getElementById("detailModal"));
+
+        // Track which cards have been updated to avoid repeated API calls
+        const updatedCards = new Set();
+
         async function doSearch(q, type) {
-            const res = await fetch("/search", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ q, type })
-            });
-            return res.json();
+            try {
+                const res = await fetch("/search", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ q, type: type || null })
+                });
+                
+                if (res.status === 403) {
+                    console.error("Not logged in");
+                    window.location.href = "/login";
+                    return [];
+                }
+                
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({}));
+                    console.error("Search failed:", res.status, res.statusText, errorData);
+                    return [];
+                }
+                
+                const data = await res.json();
+                console.log("Search results:", data);
+                return Array.isArray(data) ? data : [];
+            } catch (e) {
+                console.error("Search error:", e);
+                return [];
+            }
         }
 
+        async function fetchAndUpdatePoster(imdbId, card, type) {
+            // Skip if already updated
+            const cardKey = `${imdbId}`;
+            if (updatedCards.has(cardKey)) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/details/${imdbId}`);
+                const data = await res.json();
+                
+                if (data.Poster && data.Poster !== "N/A") {
+                    // Update card image
+                    const img = document.createElement("img");
+                    img.src = data.Poster;
+                    img.alt = data.Title;
+                    img.className = "movie-card-img";
+                    
+                    const placeholder = card.querySelector(".movie-card-placeholder");
+                    if (placeholder) {
+                        card.replaceChild(img, placeholder);
+                    }
+                    
+                    // Save poster to sheet to avoid future API calls
+                    await fetch("/api/update_poster", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            id: imdbId,
+                            type: type,
+                            poster: data.Poster
+                        })
+                    }).catch(e => console.error("Error saving poster:", e));
+                    
+                    // Mark as updated to avoid future API calls
+                    updatedCards.add(cardKey);
+                    console.log(`Updated poster for ${imdbId} and saved to sheet`);
+                }
+            } catch (e) {
+                console.error(`Error fetching poster for ${imdbId}:`, e);
+            }
+        }
+
+        async function showDetails(imdbId, type, historyData = null) {
+            try {
+                const res = await fetch(`/api/details/${imdbId}`);
+                const data = await res.json();
+
+                document.getElementById("modalTitle").textContent = data.Title;
+                document.getElementById("modalType").textContent = data.Type === "movie" ? "Movie" : "TV Series";
+                document.getElementById("modalYear").textContent = data.Year;
+                document.getElementById("modalRuntime").textContent = data.Runtime || "N/A";
+                document.getElementById("modalGenre").textContent = data.Genre || "N/A";
+                document.getElementById("modalDirector").textContent = data.Director || "N/A";
+                document.getElementById("modalActors").textContent = data.Actors || "N/A";
+                document.getElementById("modalPlot").textContent = data.Plot || "No plot available";
+                document.getElementById("modalRating").textContent = data.imdbRating !== "N/A" ? data.imdbRating + "/10" : "N/A";
+
+                if (data.Poster && data.Poster !== "N/A") {
+                    document.getElementById("modalPoster").src = data.Poster;
+                }
+
+                const playBtn = document.getElementById("playBtn");
+                const s1e1Btn = document.getElementById("s1e1Btn");
+
+                if (type === "tv") {
+                    const season = historyData?.season || 1;
+                    const episode = historyData?.episode || 1;
+                    playBtn.href = `/player?id=${imdbId}&type=tv&season=${season}&episode=${episode}&title=${encodeURIComponent(data.Title)}`;
+                    s1e1Btn.href = `/player?id=${imdbId}&type=tv&season=1&episode=1&title=${encodeURIComponent(data.Title)}`;
+                    s1e1Btn.style.display = "inline-block";
+                } else {
+                    playBtn.href = `/player?id=${imdbId}&type=movie&title=${encodeURIComponent(data.Title)}`;
+                    s1e1Btn.style.display = "none";
+                }
+
+                detailModal.show();
+            } catch (e) {
+                console.error("Error loading details:", e);
+            }
+        }
+
+        // Setup Continue Watching cards
+        document.querySelectorAll("#continueWatching .movie-card").forEach(card => {
+            const imdbId = card.dataset.imdbId;
+            const type = card.dataset.type;
+            const title = card.dataset.title;
+            const season = card.dataset.season;
+            const episode = card.dataset.episode;
+
+            // Check if this card has a placeholder (missing poster)
+            const hasPlaceholder = card.querySelector(".movie-card-placeholder") !== null;
+            
+            if (hasPlaceholder) {
+                // Fetch poster for cards without images
+                fetchAndUpdatePoster(imdbId, card, type);
+            }
+
+            // Click on image or card shows modal
+            card.addEventListener("click", (e) => {
+                // Don't trigger if clicking the button
+                if (e.target.classList.contains("btn-play")) {
+                    return;
+                }
+                showDetails(imdbId, type, { season, episode, title });
+            });
+
+            // Resume button goes directly to player
+            const resumeBtn = card.querySelector(".btn-play");
+            if (resumeBtn) {
+                resumeBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    if (type === "tv") {
+                        window.location.href = `/player?id=${imdbId}&type=tv&season=${season || 1}&episode=${episode || 1}&title=${encodeURIComponent(title)}`;
+                    } else {
+                        window.location.href = `/player?id=${imdbId}&type=movie&title=${encodeURIComponent(title)}`;
+                    }
+                });
+            }
+        });
+
+        // Setup Search Form
         document.getElementById("searchForm").addEventListener("submit", async (e) => {
             e.preventDefault();
             const q = document.getElementById("q").value.trim();
-            const type = document.getElementById("type").value;
+            const type = document.getElementById("type").value || null;
             if (!q) return;
 
-            const results = await doSearch(q, type);
             const container = document.getElementById("results");
+            const noResults = document.getElementById("noResults");
+            
+            container.innerHTML = '<div class="loading-spinner"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+            noResults.style.display = "none";
+
+            const results = await doSearch(q, type);
             container.innerHTML = "";
 
             if (!results.length) {
-                container.innerHTML = '<div class="alert alert-warning">No results</div>';
+                noResults.style.display = "block";
                 return;
             }
 
             for (const item of results) {
-                const line = document.createElement("a");
-                line.href = "#";
-                line.className = "list-group-item list-group-item-action d-flex justify-content-between align-items-start";
-                const titleText = `${item.title} ${item.year ? "(" + item.year + ")" : ""}`;
-                const typeLabel = item.type === "tv" ? "TV" : "Movie";
-                line.innerHTML = `
-                    <div>
-                        <div class="fw-bold">${titleText}</div>
-                        <div class="small text-muted">${item.imdb_id} • ${typeLabel}</div>
-                    </div>
-                    <div>
-                        <a href="/player?id=${item.imdb_id}&type=${item.type}&title=${encodeURIComponent(item.title)}" class="btn btn-sm btn-outline-primary">Play</a>
-                        ${item.type === "tv" ? `<a href="/player?id=${item.imdb_id}&type=tv&season=1&episode=1&title=${encodeURIComponent(item.title)}" class="btn btn-sm btn-outline-secondary">S1E1</a>` : ""}
+                const card = document.createElement("div");
+                card.className = "movie-card";
+                
+                const posterImg = item.poster && item.poster !== "N/A" 
+                    ? `<img src="${item.poster}" alt="${item.title}" class="movie-card-img">`
+                    : `<div class="movie-card-placeholder">No Image</div>`;
+                
+                const typeLabel = item.type === "tv" ? "TV Series" : "Movie";
+                
+                card.innerHTML = `
+                    ${posterImg}
+                    <div class="movie-card-overlay">
+                        <div class="movie-card-title">${item.title}</div>
+                        <div class="movie-card-type">${typeLabel} • ${item.year || 'N/A'}</div>
+                        <div class="movie-card-buttons">
+                            <button class="btn-play" onclick="window.open('/player?id=${item.imdb_id}&type=${item.type}&title=${encodeURIComponent(item.title)}', '_blank')">Play</button>
+                            ${item.type === "tv" ? `<button class="btn-play" onclick="window.open('/player?id=${item.imdb_id}&type=tv&season=1&episode=1&title=${encodeURIComponent(item.title)}', '_blank')">S1E1</button>` : ""}
+                        </div>
                     </div>
                 `;
-                container.appendChild(line);
+                
+                card.addEventListener("click", () => showDetails(item.imdb_id, item.type));
+                container.appendChild(card);
             }
         });
     </script>

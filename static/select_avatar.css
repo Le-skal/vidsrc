@@ -1,0 +1,211 @@
+:root {
+  --bg-primary      : #0a0e27;
+  --bg-secondary    : #1a1f3a;
+  --bg-tertiary     : #252b47;
+  --accent-primary  : #6366f1;
+  --accent-secondary: #818cf8;
+  --accent-success  : #10b981;
+  --text-primary    : #e2e8f0;
+  --text-secondary  : #94a3b8;
+  --text-muted      : #64748b;
+  --border-color    : #2d3350;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: linear-gradient(135deg, var(--bg-primary) 0%, #0f1420 100%);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+main {
+  max-width: none !important;
+  width: 100% !important;
+  padding: 0 !important;
+  text-align: inherit !important;
+}
+
+.container {
+  max-width: none !important;
+  width: 100% !important;
+  padding: 0 !important;
+  text-align: inherit !important;
+}
+
+.avatar-selection-container {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: inherit !important;
+  gap: 2rem !important;
+  width: fit-content !important;
+  margin: 0 auto !important;
+  min-height: 100vh !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+}
+
+.avatar-selection-container h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--text-primary, #e2e8f0);
+}
+
+.avatar-selection-container p {
+  color: var(--text-secondary, #94a3b8);
+  text-align: center;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(110px, 1fr));
+  gap: 1rem;
+  width: auto;
+  margin: 0.5rem 0;
+  box-sizing: border-box;
+}
+
+.avatar-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0.5rem;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  background: var(--bg-secondary, #1a1f3a);
+}
+
+.avatar-option:hover {
+  transform: scale(1.05);
+  border-color: var(--accent-primary, #6366f1);
+  background: var(--bg-tertiary, #252b47);
+}
+
+.avatar-option.selected {
+  border-color: var(--accent-success, #10b981);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.avatar-option img {
+  width: 90px;
+  height: 90px;
+  border-radius: 8px;
+  display: block;
+  background: var(--bg-primary, #0a0e27);
+  padding: 0.25rem;
+}
+
+.avatar-option input[type="radio"] {
+  display: none;
+}
+
+.avatar-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #94a3b8);
+  text-align: center;
+}
+
+.button-group {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.btn-refresh {
+  background: var(--accent-secondary, #818cf8);
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-refresh:hover {
+  background: var(--accent-primary, #6366f1);
+  transform: scale(1.02);
+}
+
+.btn-confirm {
+  background: var(--accent-success, #10b981);
+  border: none;
+  color: white;
+  padding: 0.5rem 1.2rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.btn-confirm:hover:not(:disabled) {
+  background: #059669;
+  transform: scale(1.02);
+}
+
+.btn-confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary, #94a3b8);
+  grid-column: 1 / -1;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--bg-tertiary, #252b47);
+  border-top-color: var(--accent-primary, #6366f1);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .avatar-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+  }
+
+  .avatar-option img {
+    width: 100px;
+    height: 100px;
+  }
+
+  .avatar-selection-container {
+    padding: 1rem;
+    gap: 1.5rem;
+  }
+
+  .button-group {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn-refresh,
+  .btn-confirm {
+    width: 100%;
+  }
+}

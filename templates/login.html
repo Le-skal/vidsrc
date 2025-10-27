@@ -6,7 +6,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
 </head>
 <body>
-<main class="container">
+<main class="login-container">
   <h2>🎬 Select an Account</h2>
 
   {% if error %}
@@ -15,13 +15,15 @@
 
   <div class="accounts">
     {% for acc in accounts %}
-      <form method="POST">
+      <form method="POST" class="account-form">
         <input type="hidden" name="account" value="{{ acc }}">
         <button class="account-btn" type="submit">
-          <div class="account-avatar">
-            {{ acc[0]|upper }}
-          </div>
-          {{ acc }}
+          {% if account_avatars.get(acc) %}
+            <img src="{{ account_avatars.get(acc) }}" alt="{{ acc }}" class="account-avatar-img">
+          {% else %}
+            <div class="account-avatar">?</div>
+          {% endif %}
+          <span class="account-name">{{ acc }}</span>
         </button>
       </form>
     {% endfor %}

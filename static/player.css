@@ -17,316 +17,329 @@
     box-sizing: border-box;
 }
 
+html {
+    overflow: hidden;
+}
+
 body {
-    background           : linear-gradient(135deg, var(--bg-primary) 0%, #0f1420 100%);
-    color                : var(--text-primary);
-    font-family          : -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    min-height           : 100vh;
-    background-attachment: fixed;
+    background: #000;
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
 }
 
-.container-fluid {
-    max-width: 1800px;
-    margin   : 0 auto;
+/* Netflix-style Player */
+.netflix-player {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    display: block;
 }
 
-h2 {
-    font-size              : 2rem;
-    font-weight            : 700;
-    background             : linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip        : text;
-    letter-spacing         : -0.02em;
-    margin-bottom          : 0.5rem;
+.player-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background: #000;
+    display: block;
 }
 
-p {
-    color      : var(--text-secondary);
-    margin-top : 0.5rem;
-    font-size  : 1.1rem;
+.player-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+}
+
+/* Overlay Base */
+.player-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.player-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Top Overlay */
+.player-overlay-top {
+    top: 0;
+    height: 180px;
+}
+
+.overlay-gradient-top {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.3) 70%, transparent 100%);
+}
+
+.overlay-content {
+    position: relative;
+    z-index: 20;
+    padding: 2rem 3rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    height: 100%;
+}
+
+.btn-back {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
+}
+
+.btn-back:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.title-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.title-info h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.episode-info {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
     font-weight: 500;
 }
 
-.text-muted {
-    color    : var(--text-muted) !important;
-    font-size: 0.9rem;
+/* Bottom Controls Overlay */
+.player-overlay-bottom {
+    bottom: 0;
+    height: 150px;
 }
 
-.small {
-    font-size: 0.875rem;
+.overlay-gradient-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.3) 30%, rgba(0, 0, 0, 0.7) 100%);
 }
 
-strong {
-    color      : var(--text-primary);
-    font-weight: 600;
+.controls-bar {
+    position: relative;
+    z-index: 20;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 1rem 3rem 2rem 3rem;
 }
 
-/* TV Controls Section */
-#tvControls {
-    background   : var(--bg-secondary);
-    border       : 1px solid var(--border-color);
-    border-radius: 12px;
-    padding      : 1.25rem;
-    box-shadow   : 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+.controls-content {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 2rem;
 }
 
-.form-label {
-    color         : var(--text-secondary);
-    font-weight   : 500;
-    font-size     : 0.875rem;
-    margin-bottom : 0.5rem;
+.controls-left,
+.controls-middle,
+.controls-right {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+}
+
+.controls-middle {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 1rem;
+}
+
+/* Control Buttons */
+.control-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.25rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
+    font-weight: 500;
+    min-width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.control-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+.control-btn:active {
+    transform: scale(0.98);
+}
+
+/* TV Controls Group */
+.tv-control-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.tv-control-group label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
     text-transform: uppercase;
+    font-weight: 600;
     letter-spacing: 0.05em;
 }
 
-.form-control {
-    background   : var(--bg-tertiary);
-    border       : 1px solid var(--border-color);
-    color        : var(--text-primary);
-    padding      : 0.65rem 0.9rem;
-    border-radius: 8px;
-    transition   : border-color 0.2s ease, box-shadow 0.2s ease;
-    width        : 100px;
+.tv-control-group input {
+    width: 50px;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    text-align: center;
+    border-radius: 4px;
+    font-size: 0.9rem;
 }
 
-.form-control:focus {
-    background  : var(--bg-tertiary);
+.tv-control-group input:focus {
+    outline: none;
     border-color: var(--accent-primary);
-    color       : var(--text-primary);
-    box-shadow  : 0 0 0 3px rgba(99, 102, 241, 0.1);
-    outline     : none;
+    background: rgba(0, 0, 0, 0.7);
 }
 
-.form-text {
-    color     : var(--text-muted);
-    font-size : 0.8rem;
-    margin-top: 0.5rem;
-    font-style: italic;
+/* Responsive */
+@media (max-width: 1024px) {
+    .overlay-content {
+        padding: 1.5rem 2rem;
+        gap: 1.5rem;
+    }
+
+    .title-info h1 {
+        font-size: 2rem;
+    }
+
+    .controls-bar {
+        padding: 0.75rem 2rem 1.5rem 2rem;
+    }
+
+    .controls-left,
+    .controls-middle,
+    .controls-right {
+        gap: 0.75rem;
+    }
 }
 
-/* Buttons */
-.btn {
-    padding      : 0.65rem 1.5rem;
-    border-radius: 8px;
-    font-weight  : 500;
-    transition   : all 0.2s ease;
-    border       : none;
-    font-size    : 0.95rem;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
-    color     : white;
-    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.3);
-}
-
-.btn-primary:hover {
-    background: linear-gradient(135deg, #5558e3 0%, #6d77f0 100%);
-    box-shadow: 0 4px 8px rgba(99, 102, 241, 0.4);
-    transform : translateY(-2px);
-}
-
-.btn-primary:active {
-    transform: translateY(0);
-}
-
-.btn-outline-primary {
-    background: transparent;
-    border    : 1px solid var(--accent-primary);
-    color     : var(--accent-primary);
-}
-
-.btn-outline-primary:hover {
-    background  : var(--accent-primary);
-    color       : white;
-    border-color: var(--accent-primary);
-    box-shadow  : 0 2px 8px rgba(99, 102, 241, 0.3);
-}
-
-.btn-outline-success {
-    background: transparent;
-    border    : 1px solid var(--accent-success);
-    color     : var(--accent-success);
-}
-
-.btn-outline-success:hover {
-    background  : var(--accent-success);
-    color       : white;
-    border-color: var(--accent-success);
-    box-shadow  : 0 2px 8px rgba(16, 185, 129, 0.3);
-}
-
-.btn-outline-light {
-    background: transparent;
-    border    : 1px solid var(--border-color);
-    color     : var(--text-secondary);
-}
-
-.btn-outline-light:hover {
-    background  : var(--bg-secondary);
-    color       : var(--text-primary);
-    border-color: var(--text-secondary);
-}
-
-/* Player Card */
-.card {
-    background   : var(--bg-secondary);
-    border       : 1px solid var(--border-color);
-    border-radius: 12px;
-    overflow     : hidden;
-    box-shadow   : 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
-}
-
-.card-body {
-    padding : 0;
-    position: relative;
-}
-
-/* Player iframe */
-.player-iframe {
-    width     : 100%;
-    height    : 75vh;
-    min-height: 500px;
-    border    : none;
-    display   : block;
-    background: #000;
-}
-
-/* Header area styling */
-.d-flex.justify-content-between {
-    background   : var(--bg-secondary);
-    border       : 1px solid var(--border-color);
-    border-radius: 12px;
-    padding      : 1.25rem 1.5rem;
-    box-shadow   : 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-}
-
-/* Column alignments */
-.col-auto {
-    display       : flex;
-    flex-direction: column;
-}
-
-.col-auto.d-grid {
-    display: flex !important;
-}
-
-/* Responsive design */
 @media (max-width: 768px) {
-    h2 {
+    .overlay-content {
+        padding: 1rem 1.5rem;
+        gap: 1rem;
+    }
+
+    .title-info h1 {
         font-size: 1.5rem;
     }
 
-    .player-iframe {
-        height    : 50vh;
-        min-height: 300px;
+    .episode-info {
+        font-size: 0.9rem;
     }
 
-    #tvControls {
-        padding: 1rem;
+    .controls-bar {
+        padding: 0.5rem 1.5rem 1rem 1.5rem;
     }
 
-    .form-control {
-        width: 80px;
+    .btn-back {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
     }
 
-    .btn {
-        padding  : 0.5rem 1rem;
-        font-size: 0.875rem;
+    .control-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+        min-width: 40px;
+        height: 40px;
     }
 
-    .d-flex.justify-content-between {
-        flex-direction: column;
-        gap           : 1rem;
+    .controls-middle {
+        display: none;
     }
 
-    .d-flex.justify-content-between>div:last-child {
-        align-self: flex-start;
-    }
-
-    #tvControls .col {
-        flex      : 1 1 100%;
-        margin-top: 0.5rem;
+    .progress-bar-container {
+        height: 3px;
+        margin-bottom: 0.75rem;
     }
 }
 
-@media (max-width: 576px) {
-    #tvControls {
-        flex-direction: column !important;
-        align-items   : stretch !important;
+@media (max-width: 480px) {
+    .overlay-content {
+        padding: 0.75rem 1rem;
+        gap: 0.75rem;
     }
 
-    #tvControls .col-auto {
-        width: 100%;
+    .title-info h1 {
+        font-size: 1.25rem;
     }
 
-    .form-control {
-        width: 100%;
+    .controls-bar {
+        padding: 0.5rem 1rem 0.75rem 1rem;
     }
 
-    #tvControls .col-auto.d-grid button {
-        width: 100%;
+    .btn-back {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+    }
+
+    .control-btn {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8rem;
+        min-width: 36px;
+        height: 36px;
     }
 }
 
-/* Scrollbar styling */
+/* Hide scrollbars - aggressive */
 ::-webkit-scrollbar {
-    width: 10px;
+    width: 0;
+    height: 0;
+    display: none !important;
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--bg-primary);
+    display: none !important;
 }
 
 ::-webkit-scrollbar-thumb {
-    background   : var(--bg-tertiary);
-    border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-primary);
-}
-
-/* Loading state for iframe */
-.player-iframe::before {
-    content         : '';
-    position        : absolute;
-    top             : 50%;
-    left            : 50%;
-    transform       : translate(-50%, -50%);
-    width           : 50px;
-    height          : 50px;
-    border          : 3px solid var(--border-color);
-    border-top-color: var(--accent-primary);
-    border-radius   : 50%;
-    animation       : spin 1s linear infinite;
-}
-
-@keyframes spin {
-    to {
-        transform: translate(-50%, -50%) rotate(360deg);
-    }
-}
-
-/* Input number controls styling */
-input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button {
-    opacity: 1;
-    cursor : pointer;
-}
-
-/* Focus visible improvements */
-.btn:focus-visible,
-.form-control:focus-visible {
-    outline       : 2px solid var(--accent-primary);
-    outline-offset: 2px;
-}
-
-/* Smooth transitions for all interactive elements */
-a,
-button,
-input,
-select {
-    transition: all 0.2s ease;
+    display: none !important;
 }

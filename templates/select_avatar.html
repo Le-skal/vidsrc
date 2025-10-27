@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Select Avatar - {{ account }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='select_avatar.css') }}">
+</head>
+<body>
+<div class="avatar-selection-container">
+  <div>
+    <h2>🎮 Choose Your Avatar</h2>
+    <p>Pick a gaming-style avatar for <strong>{{ account }}</strong></p>
+  </div>
+
+  <div id="avatarGrid" class="avatar-grid">
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>Loading avatars...</span>
+    </div>
+  </div>
+
+  <div class="button-group">
+    <button id="refreshBtn" class="btn-refresh" onclick="loadAvatars()">
+      🔄 Get Different Avatars
+    </button>
+    <button id="confirmBtn" class="btn-confirm" disabled onclick="confirmAvatar()">
+      ✓ Select Avatar
+    </button>
+  </div>
+</div>
+</body>
+</html>
+
+<script>
+  let currentAvatars = [];
+  let selectedAvatar = null;
+
+  async function loadAvatars() {
+    const grid = document.getElementById('avatarGrid');
+    grid.innerHTML = '<div class="loading"><div class="spinner"></div><span>Loading avatars...</span></div>';
+    selectedAvatar = null;
+    document.getElementById('confirmBtn').disabled = true;
+    
+    try {
+      const response = await fetch('/api/random_avatars');
+      const avatars = await response.json();
+      currentAvatars = avatars;
+      renderAvatars();
+    } catch (error) {
+      console.error('Error loading avatars:', error);
+      grid.innerHTML = '<p style="color: red;">Failed to load avatars. Please try again.</p>';
+    }
+  }
+
+  function renderAvatars() {
+    const grid = document.getElementById('avatarGrid');
+    grid.innerHTML = '';
+
+    currentAvatars.forEach((avatar, index) => {
+      const div = document.createElement('label');
+      div.className = 'avatar-option';
+      div.innerHTML = `
+        <input type="radio" name="avatar" value="${index}">
+        <img src="${avatar.url}" alt="Avatar ${index + 1}">
+        <span class="avatar-label">${avatar.style}</span>
+      `;
+
+      const radio = div.querySelector('input[type="radio"]');
+      radio.addEventListener('change', () => {
+        document.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
+        div.classList.add('selected');
+        selectedAvatar = avatar;
+        document.getElementById('confirmBtn').disabled = false;
+      });
+
+      grid.appendChild(div);
+    });
+  }
+
+  async function confirmAvatar() {
+    if (!selectedAvatar) return;
+
+    const btn = document.getElementById('confirmBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    try {
+      const response = await fetch('/api/avatar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          avatar_url: selectedAvatar.url,
+          seed: selectedAvatar.seed
+        })
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        window.location.href = '/';
+      } else {
+        alert('Error saving avatar: ' + (result.error || 'Unknown error'));
+        btn.disabled = false;
+        btn.textContent = '✓ Select Avatar';
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error saving avatar');
+      btn.disabled = false;
+      btn.textContent = '✓ Select Avatar';
+    }
+  }
+
+  // Load avatars when page loads
+  loadAvatars();
+</script>
+</body>
+</html>
