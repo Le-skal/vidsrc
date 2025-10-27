@@ -87,10 +87,10 @@ body {
 .overlay-content {
     position: relative;
     z-index: 20;
-    padding: 2rem 3rem;
+    padding: 2% 3%;
     display: flex;
     align-items: center;
-    gap: 2rem;
+    gap: 2%;
     height: 100%;
 }
 
@@ -119,7 +119,7 @@ body {
 }
 
 .title-info h1 {
-    font-size: 2.5rem;
+    font-size: clamp(1.25rem, 5vw, 2.5rem);
     font-weight: 700;
     margin: 0;
     color: white;
@@ -154,14 +154,14 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding: 1rem 3rem 2rem 3rem;
+    padding: 1% 3% 2% 3%;
 }
 
 .controls-content {
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    gap: 2rem;
+    gap: 1%;
 }
 
 .controls-left,
@@ -169,7 +169,7 @@ body {
 .controls-right {
     display: flex;
     align-items: flex-end;
-    gap: 1rem;
+    gap: 0.5%;
 }
 
 .controls-middle {
@@ -184,9 +184,9 @@ body {
     background: rgba(255, 255, 255, 0.1);
     border: none;
     color: white;
-    padding: 0.75rem 1.25rem;
+    padding: 0.5rem 1rem;
     border-radius: 6px;
-    font-size: 1rem;
+    font-size: clamp(0.75rem, 2vw, 1rem);
     cursor: pointer;
     transition: all 0.2s ease;
     backdrop-filter: blur(4px);
