@@ -1,6 +1,6 @@
 <div align="center">
 
-# vidsrc
+# Vidsrc
 ### *Personal Movie & TV Show Streaming Interface*
 
 <p><em>Search, track, and watch movies and TV shows — all in one place</em></p>
